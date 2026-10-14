@@ -1,0 +1,27 @@
+{
+  "type": "client",
+  "name": "show_play",
+  "description": "Show one saved play on the coach's screen. Pass the id of a play returned by search_plays, and hash 'left' or 'right' when the coach named one. Returns 'shown' when the drawing is on screen, 'shown, but no <hash> hash version is saved' when that hash was never saved, or 'not found'.",
+  "expects_response": true,
+  "response_timeout_secs": 10,
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "play_id": {
+        "type": "string",
+        "description": "The id of the play to show, exactly as returned by search_plays."
+      },
+      "hash": {
+        "type": "string",
+        "enum": [
+          "left",
+          "right"
+        ],
+        "description": "The hash the coach asked for ('left' or 'right'). Omit it when the coach did not say a hash."
+      }
+    },
+    "required": [
+      "play_id"
+    ]
+  }
+}

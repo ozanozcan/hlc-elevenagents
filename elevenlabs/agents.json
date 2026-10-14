@@ -1,0 +1,8 @@
+{
+    "agents": [
+        {
+            "config": "agent_configs/hlc-playbook.json",
+            "id": "agent_2001m4tt1v5rfwev0t407nwwb2tj"
+        }
+    ]
+}

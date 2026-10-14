@@ -1,0 +1,23 @@
+{
+  "type": "webhook",
+  "name": "search_plays",
+  "description": "Search the coach's saved playbook. Matches the query against play names, formation names and the original play calls. Returns up to 20 plays as id, name, formation and variants (label + source call). Use the returned id with show_play; never read ids aloud.",
+  "response_timeout_secs": 10,
+  "api_schema": {
+    "url": "https://{{system__env_hlc_tunnel_host}}/voice-tools/plays",
+    "method": "GET",
+    "query_params_schema": {
+      "properties": {
+        "q": {
+          "type": "string",
+          "description": "Short search text taken from what the coach said, e.g. a concept or formation name such as 'smash' or 'spread'. At most 100 characters."
+        }
+      },
+      "required": ["q"]
+    },
+    "request_headers": {
+      "Authorization": { "variable_name": "secret__hlc_voice_token" },
+      "X-HLC-Tool-Secret": { "secret_id": "DcBy7Zhf0rpUTiuRCd1N" }
+    }
+  }
+}

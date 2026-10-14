@@ -1,0 +1,19 @@
+{
+  "type": "client",
+  "name": "show_draw",
+  "description": "Show a freshly drawn play on the coach's screen. Pass the draw_id that draw_play returned with status 'drawn'. Returns 'shown' when the drawing is on screen, or 'not found' when the drawing has expired.",
+  "expects_response": true,
+  "response_timeout_secs": 10,
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "draw_id": {
+        "type": "string",
+        "description": "The draw_id exactly as returned by draw_play."
+      }
+    },
+    "required": [
+      "draw_id"
+    ]
+  }
+}

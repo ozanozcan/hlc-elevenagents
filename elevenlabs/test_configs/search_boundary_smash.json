@@ -1,0 +1,23 @@
+{
+  "name": "search_boundary_smash",
+  "type": "tool",
+  "chat_history": [
+    {
+      "role": "user",
+      "message": "show our boundary smash",
+      "time_in_call_secs": 1
+    }
+  ],
+  "dynamic_variables": {
+    "secret__hlc_voice_token": "Bearer unit-test-placeholder"
+  },
+  "tool_call_parameters": {
+    "referenced_tool": {
+      "id": "tool_4801m4thc0w8e3y9br8qw4xxghcn",
+      "type": "webhook"
+    },
+    "parameters": [],
+    "verify_absence": false
+  },
+  "check_any_tool_matches": true
+}

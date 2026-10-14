@@ -1,0 +1,366 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Run</title>
+<link rel="icon" href="data:,">
+<!-- The run page (unit-view lane C), built to docs/plans/unit-view/dispatch/mockups/C-run-page.html.
+     /run.html lists every mow go run; /run.html?stem=<stem>[&repo=<name>] joins one run's sources.
+     Tokens copied verbatim from bin/cam.html. Served by `git-timeline serve` from 127.0.0.1 only:
+     no external script, style or font. Every string from /unit-data.json goes in with textContent or
+     setAttribute, never parsed as markup (cam-ui P10). Documents are plain-text panels. -->
+<style>
+:root {
+  --bg: #f7f7f5; --surface: #ffffff; --line: #e4e4e0; --text: #1d1d1b; --muted: #6b6b66;
+  --read: #8a94a6; --write: #2a78d6; --remote: #1baf7a; --destructive: #d03b3b; --fail: #d03b3b;
+  --ok: #2e8b57; --accent: #1d1d1b; --chip: #efefeb; --label: #1d1d1b; --fix: #c27a12;
+  --sans: "Farro", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #141413; --surface: #1d1d1b; --line: #33332f; --text: #ecece8; --muted: #9a9a93;
+    --read: #7d8697; --write: #3987e5; --remote: #199e70; --destructive: #d03b3b; --fail: #ef6a5c;
+    --ok: #5fbf88; --accent: #ecece8; --chip: #2a2a27; --label: #ecece8; --fix: #e0a040;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #141413; --surface: #1d1d1b; --line: #33332f; --text: #ecece8; --muted: #9a9a93;
+  --read: #7d8697; --write: #3987e5; --remote: #199e70; --destructive: #d03b3b; --fail: #ef6a5c;
+  --ok: #5fbf88; --accent: #ecece8; --chip: #2a2a27; --label: #ecece8; --fix: #e0a040;
+}
+* { box-sizing: border-box; }
+::selection { background: var(--text); color: var(--bg); }
+html { scrollbar-color: var(--line) transparent; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 var(--sans); }
+a { color: inherit; text-underline-offset: 3px; }
+a:focus-visible, summary:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; border-radius: 3px; }
+.wrap { max-width: 1180px; margin: 0 auto; padding: 24px 16px 64px; }
+h1 { font-size: 22px; margin: 0; letter-spacing: -0.01em; overflow-wrap: anywhere; }
+.row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.guide { color: var(--text); font-size: 13px; font-weight: 500; text-decoration: none; white-space: nowrap;
+  border: 1px solid var(--line); border-radius: 999px; padding: 5px 12px; }
+.guide:hover, .guide:focus-visible { border-color: var(--text); outline: none; }
+.dayhead { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; margin: 0 0 10px; flex-wrap: wrap; }
+.lede { margin: 6px 0 0; max-width: 72ch; color: var(--muted); font-size: 13px; }
+.meta { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; margin: 4px 0 0; }
+.st { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text); white-space: nowrap; }
+.dot { width: 8px; height: 8px; border-radius: 50%; flex: none; background: var(--muted); }
+.dot.ok { background: var(--ok); } .dot.inf { background: var(--fix); } .dot.run { background: var(--write); }
+.dot.fail { background: var(--fail); }
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 16px 0 14px; }
+.stat { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; min-width: 0; }
+.stat b { display: block; font-size: 20px; font-variant-numeric: tabular-nums; }
+.stat span { color: var(--muted); font-size: 12px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px; margin-bottom: 14px; min-width: 0; }
+.card h2 { font-size: 13px; margin: 0; color: var(--label); font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
+.grid2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; }
+.list { list-style: none; margin: 0; padding: 0; }
+.list li { display: grid; grid-template-columns: 70px minmax(0, 1fr) auto; gap: 10px; align-items: baseline;
+  padding: 7px 0; border-bottom: 1px solid var(--line); font-size: 13px; }
+.list li:last-child { border-bottom: 0; }
+.list .k { font-variant-numeric: tabular-nums; color: var(--muted); font-size: 12px; }
+.list .t { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.list .s { font-size: 12px; color: var(--muted); white-space: nowrap; }
+.list .s.open { color: var(--fix); }
+.list .s.done { color: var(--ok); }
+.list.scroll { max-height: 420px; overflow: auto; }
+.runs li { grid-template-columns: 110px minmax(0, 1fr) auto; }
+code { font-family: inherit; font-size: 12px; background: var(--chip); border-radius: 4px; padding: 1px 5px; }
+.empty { color: var(--muted); padding: 14px 0 4px; font-size: 13px; margin: 0; }
+details.doc { border-bottom: 1px solid var(--line); }
+details.doc:last-child { border-bottom: 0; }
+details.doc > summary { cursor: pointer; padding: 8px 0; font-size: 13px; list-style: none; display: flex; justify-content: space-between; gap: 10px; }
+details.doc > summary::-webkit-details-marker { display: none; }
+details.doc > summary > span:first-child { min-width: 0; overflow-wrap: anywhere; }
+details.doc > summary > span:first-child::before { content: "▸ "; color: var(--muted); }
+details.doc[open] > summary > span:first-child::before { content: "▾ "; }
+details.doc > summary .meta { margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+details.doc pre { white-space: pre-wrap; overflow-wrap: anywhere; font: 12px/1.5 var(--sans); color: var(--muted); margin: 0 0 10px; max-height: 320px; overflow: auto; }
+svg text { font: 11px var(--sans); fill: var(--muted); }
+svg .lbl { fill: var(--text); font-weight: 500; }
+.draw { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.draw svg { min-width: 640px; display: block; }
+.legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: var(--muted); margin-top: 6px; }
+.sw { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
+.note { font-size: 12px; color: var(--muted); margin: 8px 0 0; }
+[hidden] { display: none !important; }
+@media (max-width: 720px) {
+  .stats { grid-template-columns: repeat(2, 1fr); }
+  .grid2 { grid-template-columns: minmax(0, 1fr); }
+  .list li, .runs li { grid-template-columns: 56px minmax(0, 1fr); }
+  .runs li { grid-template-columns: 76px minmax(0, 1fr); }
+  .list .s { grid-column: 2; white-space: normal; }
+}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <div class="dayhead">
+    <div>
+      <div class="row" style="margin-bottom:6px"><span class="meta" id="kicker" style="margin:0">run</span><span class="st" id="status"></span></div>
+      <h1 id="title">Runs</h1>
+      <p class="lede" id="lede"></p>
+      <p class="meta" id="meta">Loading unit-data.json…</p>
+    </div>
+    <div class="row"><a class="guide" href="/">Home</a><a class="guide" href="/run.html">All runs</a><a class="guide" href="/mow-timeline.html">Runs →</a></div>
+  </div>
+
+  <!-- index: /run.html -->
+  <section class="card" id="index" aria-labelledby="h-index" hidden>
+    <div class="dayhead"><h2 id="h-index">Every run</h2><span class="meta" id="index-sub">tracker.json · newest first</span></div>
+    <ul class="list runs" id="index-list"></ul>
+  </section>
+
+  <!-- run: /run.html?stem= -->
+  <div id="run" hidden>
+    <div class="stats" id="stats"></div>
+
+    <section class="card" aria-labelledby="h-draw">
+      <div class="dayhead"><h2 id="h-draw">Run</h2><span class="meta">tracker.json · agents on one time axis</span></div>
+      <div class="draw" id="draw"></div>
+      <div class="legend"><span><i class="sw" style="background:var(--ok)"></i>done</span><span><i class="sw" style="background:var(--write)"></i>running</span><span><i class="sw" style="background:var(--fix)"></i>issues</span><span><i class="sw" style="background:var(--fail)"></i>error</span><span><i class="sw" style="border:1px dashed var(--ok)"></i>gate</span></div>
+    </section>
+
+    <section class="card" aria-labelledby="h-chats">
+      <div class="dayhead"><h2 id="h-chats">Chats that ran it</h2><span class="meta" id="chats-sub"></span></div>
+      <ul class="list" id="chats"></ul>
+      <p class="note" id="chats-note" hidden>New runs record their chats at <code>/mow go</code> §1 and show <span class="st"><i class="dot ok"></i>recorded</span> here.</p>
+    </section>
+
+    <div class="grid2">
+      <section class="card" aria-labelledby="h-board">
+        <div class="dayhead"><h2 id="h-board">Board</h2><span class="meta">todos · findings · plan tag · briefs</span></div>
+        <ul class="list scroll" id="board"></ul>
+      </section>
+      <section class="card" aria-labelledby="h-commits">
+        <div class="dayhead"><h2 id="h-commits">Commits</h2><span class="meta">git log on owned paths ∪ cited</span></div>
+        <ul class="list scroll" id="commits"></ul>
+      </section>
+    </div>
+
+    <div class="grid2">
+      <section class="card" aria-labelledby="h-cam">
+        <div class="dayhead"><h2 id="h-cam">CAM</h2><span class="meta" id="cam-sub"></span></div>
+        <ul class="list scroll" id="cam"></ul>
+      </section>
+      <section class="card" aria-labelledby="h-lessons">
+        <div class="dayhead"><h2 id="h-lessons">Lessons</h2><span class="meta">LESSONS.md citing the stem or chat</span></div>
+        <ul class="list" id="lessons"></ul>
+      </section>
+    </div>
+
+    <section class="card" aria-labelledby="h-docs">
+      <div class="dayhead"><h2 id="h-docs">Documents</h2><span class="meta" id="docs-sub"></span></div>
+      <div id="docs"></div>
+    </section>
+  </div>
+</main>
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+const pad = n => String(n).padStart(2, "0");
+const ms = t => t ? Date.parse(t) : NaN;
+const hm = t => { const d = new Date(t); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; };
+const day = t => new Date(t).toLocaleDateString(undefined, { day: "numeric", month: "short" });
+const when = t => isNaN(ms(t)) ? "—" : `${day(t)} ${hm(t)}`;
+const k = n => n == null ? "—" : n < 1e4 ? Math.round(n).toLocaleString() : n < 1e6 ? Math.round(n / 1e3) + "k"
+  : n < 1e9 ? (n / 1e6).toFixed(1) + "M" : (n / 1e9).toFixed(2) + "B";
+const dur = s => { const min = Math.round(s / 60); return min >= 60 ? `${Math.floor(min / 60)}h ${pad(min % 60)}m` : `${min}m`; };
+
+function el(tag, attrs, ...kids) {
+  const e = document.createElement(tag);
+  for (const [a, v] of Object.entries(attrs || {})) if (v != null) e.setAttribute(a, v);
+  for (const c of kids) if (c != null) e.append(c instanceof Node ? c : String(c));
+  return e;
+}
+function svg(tag, attrs, text) {
+  const e = document.createElementNS("http://www.w3.org/2000/svg", tag);
+  for (const [a, v] of Object.entries(attrs || {})) if (v != null) e.setAttribute(a, v);
+  if (text != null) e.textContent = String(text);
+  return e;
+}
+const tone = s => ({ done: "ok", shipped: "ok", running: "run", in_progress: "run", error: "fail", failed: "fail" })[s] || (s ? "inf" : "");
+const fill = s => ({ ok: "var(--ok)", run: "var(--write)", fail: "var(--fail)", inf: "var(--fix)" })[tone(s)] || "var(--muted)";
+function status(s) { return el("span", { class: "st" }, el("i", { class: "dot " + tone(s) }), s || "—"); }
+function li(key, text, side, sideClass) {
+  return el("li", {}, el("span", { class: "k" }, key), el("span", { class: "t", title: typeof text === "string" ? text : null }, text),
+            side == null ? null : el("span", { class: "s" + (sideClass ? " " + sideClass : "") }, side));
+}
+function fill_list(id, rows, empty) {
+  const ul = $(id); ul.replaceChildren(...rows);
+  if (!rows.length) ul.replaceWith(Object.assign(el("p", { class: "empty", id }), { textContent: empty }));
+}
+const params = new URLSearchParams(location.search);
+const STEM = params.get("stem") || "elevenlabs-voice-demo", REPO = params.get("repo") || "high-level-coaching";
+const runHref = (stem, repo) => "/run.html?" + new URLSearchParams(repo ? { stem, repo } : { stem });
+const taskHref = (id, repo) => "/task.html?" + new URLSearchParams(repo ? { id, repo } : { id });
+
+async function main() {
+  const q = STEM ? "?" + new URLSearchParams(REPO ? { stem: STEM, repo: REPO } : { stem: STEM }) : "";
+  let r, d;
+  try { r = { ok: true, status: 200 }; d = {"repo": "high-level-coaching", "stem": "elevenlabs-voice-demo", "title": "ElevenLabs voice demo \u2014 talk to your playbook + sideline voice notes", "status": "shipped", "started": "2026-10-08T08:02:11Z", "ended": "2026-10-13T21:31:27Z", "live": false, "brainstorm": null, "effort": {"tokens": {"in": 6520, "cw": 5358698, "cr": 365068559, "out": 399298}, "tokens_split": {"chat": 286694490, "lanes": 55264110, "gate_fixes": 28874475}, "commits": 41, "active_s": 14230, "lanes_active_s": 6455, "gate_fixes_active_s": 7775, "orchestrator_active_s": 20803, "wall_s": 480556, "chat_open_s": 480556, "lanes": {"A": {"tokens": 12346460, "active_s": 1004, "todos": 1}, "B": {"tokens": 11561529, "active_s": 1355, "todos": 1}, "C": {"tokens": 13634698, "active_s": 994, "todos": 1}, "D": {"tokens": 4797660, "active_s": 1178, "todos": 1}, "E": {"tokens": 11838322, "active_s": 1622, "todos": 1}, "Z": {"tokens": 1085441, "active_s": 302, "todos": 1}}}, "commits": [{"sha": "2471ab046b449891e1002c2299b156827e71f9d9", "when": "2026-10-14T00:18:44+03:00", "subject": "mow elevenlabs-voice-demo: close-out (ship-check, action report, board sync, tracker)", "repo": "high-level-coaching", "source": "window", "short": "2471ab0"}, {"sha": "b7663e62ebba7a2a19306bc80926ff4b6ee43ebd", "when": "2026-10-13T23:59:11+03:00", "subject": "mow elevenlabs-voice-demo: wave 4 fix records + tracker (gate closed)", "repo": "high-level-coaching", "source": "window", "short": "b7663e6"}, {"sha": "aff4b968e11f4e4bb2d0c7521abeff109fae56ad", "when": "2026-10-13T23:58:48+03:00", "subject": "mow elevenlabs-voice-demo wave 4: land mow/elevenlabs-voice-demo/integrate-z-fix1", "repo": "high-level-coaching", "source": "window+cited", "short": "aff4b96"}, {"sha": "72f99e719019fdd5fb3a253e8c31462964fde96d", "when": "2026-10-13T23:49:18+03:00", "subject": "mow elevenlabs-voice-demo: call-button guard fix4 record", "repo": "high-level-coaching", "source": "window", "short": "72f99e7"}, {"sha": "629ace6a7885ab8d25d760471f52e73eb0aff4b3", "when": "2026-10-13T23:49:03+03:00", "subject": "Plan elevenlabs-voice-demo: lane Z owns the preflight and agent-test files it added", "repo": "high-level-coaching", "source": "window", "short": "629ace6"}, {"sha": "a67970e734030a0165a95019e09282461665981a", "when": "2026-10-13T23:48:33+03:00", "subject": "mow elevenlabs-voice-demo wave 2: land mow/elevenlabs-voice-demo/integrate-c-fix4", "repo": "high-level-coaching", "source": "window+cited", "short": "a67970e"}, {"sha": "fa6a769b52acc8dadb7724bcde85506daa415226", "when": "2026-10-13T23:45:00+03:00", "subject": "mow elevenlabs-voice-demo: lane Z verification record + tracker", "repo": "high-level-coaching", "source": "window", "short": "fa6a769"}, {"sha": "dc0699d0d01039944a2ca56d53d6a3fb765805bf", "when": "2026-10-13T23:20:02+03:00", "subject": "mow tenancy-hardening wave 2: land mow/tenancy-hardening-w2/integrate", "repo": "high-level-coaching", "source": "window", "short": "dc0699d"}, {"sha": "8c8c7e953f5b9ffa4db2d77f903facc9b4c02df9", "when": "2026-10-13T23:18:20+03:00", "subject": "demo: showcase README draft for hlc-elevenagents", "repo": "high-level-coaching", "source": "window", "short": "8c8c7e9"}, {"sha": "a498b76b49fae8a285f9c6947c9738709ec42fa7", "when": "2026-10-13T23:17:38+03:00", "subject": "demo: one-command voice demo preflight (no ElevenLabs quota)", "repo": "high-level-coaching", "source": "window", "short": "a498b76"}, {"sha": "1b4d9984628bc4fac838b40af8d8c83c16093d3c", "when": "2026-10-13T23:15:59+03:00", "subject": "elevenlabs: make the agent private (enable_auth) before the showcase", "repo": "high-level-coaching", "source": "window+cited", "short": "1b4d998"}, {"sha": "34d7b6b153baf23d4998f011eb5e2782372de10c", "when": "2026-10-13T23:05:58+03:00", "subject": "demo: measured rehearsal numbers; close the execution_mode fog line", "repo": "high-level-coaching", "source": "window", "short": "34d7b6b"}, {"sha": "a893b04e2f2f660cf37a6fbf3bcf6bd54603850f", "when": "2026-10-13T22:49:01+03:00", "subject": "mow elevenlabs-voice-demo: call-button fix records (rehearsal finding)", "repo": "high-level-coaching", "source": "window", "short": "a893b04"}, {"sha": "46eac12665c4552c88690f8427afd8a48d0bd8f7", "when": "2026-10-13T22:48:34+03:00", "subject": "mow elevenlabs-voice-demo wave 2: land mow/elevenlabs-voice-demo/integrate-c-fix3", "repo": "high-level-coaching", "source": "window+cited", "short": "46eac12"}, {"sha": "b9afd1cbbf4248e9ef7d36537c97709200f50d58", "when": "2026-10-13T20:50:08+03:00", "subject": "elevenlabs agent tests 4/4 live: fix parameter paths and the unresolved grader", "repo": "high-level-coaching", "source": "window+cited", "short": "b9afd1c"}, {"sha": "d9161b09b6b247e874f7cc84b4d6c9ef310f349e", "when": "2026-10-13T20:29:11+03:00", "subject": "demo: elevenlabs RUNBOOK and 5-minute DEMO script", "repo": "high-level-coaching", "source": "window", "short": "d9161b0"}, {"sha": "8353fdecc646023a78d21d05a7c5cbfdbd9e2e64", "when": "2026-10-13T20:28:03+03:00", "subject": "demo: showcase manifest + export script for hlc-elevenagents (d#1115, d#1119)", "repo": "high-level-coaching", "source": "window", "short": "8353fde"}, {"sha": "202bed704f61c81ada71a397a6671f0e266ed3c3", "when": "2026-10-13T20:22:12+03:00", "subject": "demo: export the live dev team for elevenlabs rehearsals (d#1117)", "repo": "high-level-coaching", "source": "window", "short": "202bed7"}, {"sha": "1d1476142875b1975554fd6b6b25ba51cb80e2c2", "when": "2026-10-13T20:15:37+03:00", "subject": "Repoint taskman from retired dotfiles-ai to ai-wow (chat 1 edit, committed)", "repo": "high-level-coaching", "source": "cited", "short": "1d14761"}, {"sha": "e0b90e31883d8f611d96543266ead5afe68fec08", "when": "2026-10-13T20:09:58+03:00", "subject": "mow elevenlabs-voice-demo: wave 3 fix-round records + tracker (gate closed)", "repo": "high-level-coaching", "source": "window", "short": "e0b90e3"}, {"sha": "ce93133998ad00ff85bb5ffdecff57cd20cab88d", "when": "2026-10-13T20:09:37+03:00", "subject": "mow elevenlabs-voice-demo wave 3: land mow/elevenlabs-voice-demo/integrate-w3-fix1b", "repo": "high-level-coaching", "source": "window+cited", "short": "ce93133"}, {"sha": "8faa3b58d4a048d84bf1a744e23e2f62e5ba7f3f", "when": "2026-10-13T19:58:56+03:00", "subject": "Plan elevenlabs-voice-demo: lane E owns its fix-round paths", "repo": "high-level-coaching", "source": "window", "short": "8faa3b5"}, {"sha": "ad3d4350387df9920a71800fed17a7f3d0afe8be", "when": "2026-10-13T19:41:48+03:00", "subject": "mow elevenlabs-voice-demo: wave 3 records + operator rulings d#1120, d#1121", "repo": "high-level-coaching", "source": "window", "short": "ad3d435"}, {"sha": "89381382bb6535d1077896edff65906ce37d10ae", "when": "2026-10-13T19:41:18+03:00", "subject": "mow elevenlabs-voice-demo wave 3: land mow/elevenlabs-voice-demo/integrate-w3", "repo": "high-level-coaching", "source": "window+cited", "short": "8938138"}, {"sha": "3c7b44238e3da15846a7dd8fec17c4744e3cad0c", "when": "2026-10-13T18:57:48+03:00", "subject": "Plan elevenlabs-voice-demo: brief wording the preflight parser misread", "repo": "high-level-coaching", "source": "window", "short": "3c7b442"}, {"sha": "2ffef59ea831c247467e53606b6d1837557c7105", "when": "2026-10-13T18:51:29+03:00", "subject": "elevenlabs: sync wave-2 agent to ElevenLabs; record tool and test ids", "repo": "high-level-coaching", "source": "window+cited", "short": "2ffef59"}, {"sha": "40b668a73c3872cda4302c32aed04c49e0ca615b", "when": "2026-10-13T18:42:31+03:00", "subject": "mow elevenlabs-voice-demo: wave 2 fix-round records + tracker", "repo": "high-level-coaching", "source": "window", "short": "40b668a"}, {"sha": "1eac401eb7b866fe2f2576165dfdc61326f46e08", "when": "2026-10-13T18:42:07+03:00", "subject": "mow elevenlabs-voice-demo wave 2: land mow/elevenlabs-voice-demo/integrate-w2-fix1b", "repo": "high-level-coaching", "source": "window+cited", "short": "1eac401"}, {"sha": "062856c9281308f20cce66e8cc2fcef805c8fcb7", "when": "2026-10-13T18:41:49+03:00", "subject": "Plan elevenlabs-voice-demo: lane B owns the shared voice test fake", "repo": "high-level-coaching", "source": "window", "short": "062856c"}, {"sha": "5d533234ec86baef9b872be63dad90977db19ada", "when": "2026-10-13T18:23:22+03:00", "subject": "mow elevenlabs-voice-demo: wave 2 records (verification, evidence, tracker)", "repo": "high-level-coaching", "source": "window", "short": "5d53323"}, {"sha": "8128ae7c56f33f2bb878cc8d0b04f447cf7488ad", "when": "2026-10-13T18:22:27+03:00", "subject": "mow elevenlabs-voice-demo wave 2: land mow/elevenlabs-voice-demo/integrate-w2b", "repo": "high-level-coaching", "source": "window+cited", "short": "8128ae7"}, {"sha": "eabce91324de0f976722f53a32b2e18a6c91a25f", "when": "2026-10-13T17:48:14+03:00", "subject": "Plan elevenlabs-voice-demo: wave-1 smoke findings written back before wave 2", "repo": "high-level-coaching", "source": "window", "short": "eabce91"}, {"sha": "b855595987a26b125edbc9cdab245e29718234cb", "when": "2026-10-13T17:46:50+03:00", "subject": "voice demo: show_play draws the variant for the hash the coach asked for", "repo": "high-level-coaching", "source": "window+cited", "short": "b855595"}, {"sha": "fe36b79f6d2a31e8dca7a1af148cba0e32a53307", "when": "2026-10-13T17:37:31+03:00", "subject": "voice demo smoke fixes: typed auth header, live transcript, word search", "repo": "high-level-coaching", "source": "window+cited", "short": "fe36b79"}, {"sha": "ded6372c71c3422c9472dbc481d914ef60650f0b", "when": "2026-10-13T17:18:44+03:00", "subject": "elevenlabs: agent id from first agents push (CLI registry shape)", "repo": "high-level-coaching", "source": "window", "short": "ded6372"}, {"sha": "8c483cd9dfa3700da51ed6ccc2f2728e475c6d2e", "when": "2026-10-13T17:17:52+03:00", "subject": "elevenlabs: real tool ids and workspace secret id after first push", "repo": "high-level-coaching", "source": "window+cited", "short": "8c483cd"}, {"sha": "cbd3274863efba2361ab9bbac5971fc4dfebe54f", "when": "2026-10-08T11:50:42+03:00", "subject": "mow elevenlabs-voice-demo: wave 1 fix-round records + tracker", "repo": "high-level-coaching", "source": "window", "short": "cbd3274"}, {"sha": "0b891c9237758be1aa8703fcc2b81362999eb211", "when": "2026-10-08T11:50:30+03:00", "subject": "mow elevenlabs-voice-demo wave 1: land mow/elevenlabs-voice-demo/integrate-fix1", "repo": "high-level-coaching", "source": "window+cited", "short": "0b891c9"}, {"sha": "47074ad65cbdbd4f17094ea09edd1c0cfe750ad7", "when": "2026-10-08T11:38:10+03:00", "subject": "mow elevenlabs-voice-demo: wave 1 records (verification, evidence, tracker)", "repo": "high-level-coaching", "source": "window", "short": "47074ad"}, {"sha": "040bf35428e25b2dfd9e21e83ab84f318e63daf1", "when": "2026-10-08T11:36:48+03:00", "subject": "mow elevenlabs-voice-demo wave 1: land mow/elevenlabs-voice-demo/integrate", "repo": "high-level-coaching", "source": "window+cited", "short": "040bf35"}, {"sha": "ab5eb3705211a4fcaa2e5ef43e31117e0d6395b8", "when": "2026-10-08T11:36:44+03:00", "subject": "Plan elevenlabs-voice-demo: lane A owns tests/middleware/__init__.py", "repo": "high-level-coaching", "source": "window", "short": "ab5eb37"}], "chats": [{"session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "how": "recorded", "label": "recorded", "title": "4 \u00b7 elevenlabs-voice-demo \u00b7 shipped \u2713", "ordinal": 4, "tokens": 293969802}], "tracker": {"waves": [{"wave": 1, "status": "issues", "lanes": [{"lane": "A", "title": "voice-tracer", "status": "issues", "started": "2026-10-08T08:02:49Z", "ended": "2026-10-08T08:20:24Z", "agents": [{"name": "tdd-builder", "status": "done", "started": "2026-10-08T08:02:49Z", "ended": "2026-10-08T08:20:24Z", "tokens": 203768}, {"name": "tdd-builder (fix round 1)", "status": "done", "started": "2026-10-08T08:38:10Z", "ended": "2026-10-08T08:50:42Z", "tokens": 71373}, {"name": "orchestrator (fix round 2)", "status": "done", "started": "2026-10-08T08:50:42Z", "ended": "2026-10-08T08:50:42Z", "tokens": null}]}], "gate": {"status": "issues", "started": null, "ended": null, "agents": []}}, {"wave": 2, "status": "issues", "lanes": [{"lane": "B", "title": "voice-tools-backend", "status": "issues", "started": "2026-10-13T14:49:05Z", "ended": "2026-10-13T15:15:10Z", "agents": [{"name": "tdd-builder", "status": "done", "started": "2026-10-13T14:49:05Z", "ended": "2026-10-13T15:15:10Z", "tokens": 214162}, {"name": "tdd-builder (fix round 1, backend)", "status": "done", "started": "2026-10-13T15:24:01Z", "ended": "2026-10-13T15:42:31Z", "tokens": null}, {"name": "orchestrator (fix round 2)", "status": "done", "started": null, "ended": null, "tokens": null}]}, {"lane": "C", "title": "voice-page", "status": "issues", "started": "2026-10-13T14:49:05Z", "ended": "2026-10-13T15:06:11Z", "agents": [{"name": "tdd-builder", "status": "done", "started": "2026-10-13T14:49:05Z", "ended": "2026-10-13T15:06:11Z", "tokens": 215124}, {"name": "tdd-builder (fix round 1, frontend)", "status": "done", "started": "2026-10-13T15:24:01Z", "ended": "2026-10-13T15:42:31Z", "tokens": null}, {"name": "orchestrator (fix round 2)", "status": "done", "started": null, "ended": null, "tokens": null}, {"name": "tdd-builder (fix3, rehearsal)", "status": "done", "started": null, "ended": null, "tokens": 97479}, {"name": "orchestrator (fix4)", "status": "done", "started": null, "ended": null, "tokens": null}]}, {"lane": "D", "title": "agent-config-tests", "status": "issues", "started": "2026-10-13T14:49:05Z", "ended": "2026-10-13T15:01:19Z", "agents": [{"name": "tdd-builder", "status": "done", "started": "2026-10-13T14:49:05Z", "ended": "2026-10-13T15:01:19Z", "tokens": 129750}]}], "gate": {"status": "issues", "started": null, "ended": null, "agents": []}}, {"wave": 3, "status": "issues", "lanes": [{"lane": "E", "title": "scribe-voice-notes", "status": "issues", "started": "2026-10-13T15:58:12Z", "ended": "2026-10-13T16:36:55Z", "agents": [{"name": "tdd-builder", "status": "done", "started": "2026-10-13T15:58:12Z", "ended": "2026-10-13T16:36:55Z", "tokens": 214334}, {"name": "tdd-builder (fix round 1)", "status": "done", "started": "2026-10-13T16:42:32Z", "ended": "2026-10-13T17:09:58Z", "tokens": 124667}, {"name": "orchestrator (fix round 2)", "status": "done", "started": "2026-10-13T17:09:58Z", "ended": "2026-10-13T17:09:58Z", "tokens": null}]}], "gate": {"status": "issues", "started": null, "ended": null, "agents": []}}, {"wave": 4, "status": "issues", "lanes": [{"lane": "Z", "title": "demo-rehearsal-showcase", "status": "issues", "started": "2026-10-13T17:21:46Z", "ended": "2026-10-13T20:45:00Z", "agents": [{"name": "orchestrator + operator (foreground)", "status": "done", "started": "2026-10-13T17:21:46Z", "ended": "2026-10-13T20:45:00Z", "tokens": null}, {"name": "tdd-builder (showcase export)", "status": "done", "started": "2026-10-13T20:45:00Z", "ended": "2026-10-13T20:45:00Z", "tokens": 75087}, {"name": "tdd-builder (preflight)", "status": "done", "started": "2026-10-13T20:45:00Z", "ended": "2026-10-13T20:45:00Z", "tokens": 74499}, {"name": "tdd-builder (fix round 1)", "status": "done", "started": "2026-10-13T20:59:11Z", "ended": "2026-10-13T20:59:11Z", "tokens": 88148}, {"name": "orchestrator (fix round 2)", "status": "done", "started": null, "ended": null, "tokens": null}]}], "gate": {"status": "issues", "started": null, "ended": null, "agents": []}}]}, "board": [{"id": 11865, "title": "one voice round-trip end to end \u2014 \"show our smash concept\" finds the play and draws it on /voice", "status": "done"}, {"id": 11870, "title": "Review warnings from elevenlabs-voice-demo", "status": "backlog"}, {"id": 11866, "title": "get_play + draw_play tools, draw stash, per-team voice budget, HMAC-verified post-call webhook", "status": "done"}, {"id": 11867, "title": "demo-grade /voice \u2014 mic states, live transcript, tool strip, show_draw rendering, budget/error states at 390 px", "status": "done"}, {"id": 11868, "title": "full agent-as-code (prompt, all tools, ASR keywords, max duration) + ElevenLabs next-reply and tool-call tests", "status": "done"}, {"id": 208, "title": "record a \u226460 s sideline note on /plays \u2192 Scribe v2 with team keyterms \u2192 editable call (no auto-draw)", "status": "done"}, {"id": 11869, "title": "push + live agent tests green, ngrok runbook, 5-min demo kit, fallback video, curated public repo, CV-chat summary", "status": "backlog"}, {"id": 11863, "title": "Showcase repo: name, license, and exactly which files are copied out of hlc (default: hlc-elevenagents, MIT, elevenlabs/ + app/voice/ + voice routes + their tests + README/video)", "status": "done"}, {"id": 11864, "title": "Voice budget numbers: session starts/hour, monthly voice minutes per team, max conversation seconds (default 10/h, 30 min/month, 300 s)", "status": "done"}, {"id": 11879, "title": "Commit chat 1's dotfiles-ai -> ai-wow repoint and merge origin/main (hlc#12/#13 deps) before the voice-demo rehearsal", "status": "done"}, {"id": 11880, "title": "Voice demo preflight: widen the ElevenLabs drift check to prompt text, asr keywords and tool schemas", "status": "backlog"}, {"id": 11881, "title": "Verify an iPhone Safari voice note (audio/mp4) end to end against the 480 KB VOICE_NOTE_MAX_BYTES cap", "status": "backlog"}, {"id": 11882, "title": "rate_limit: expose a public fixed-window helper so voice_tools stops importing app.rate_limit private script runner and outage handlers", "status": "backlog"}], "cam": [{"ts": "2026-10-08T08:02:18.128Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "subagent.start", "ref": null, "status": "unknown", "note": "Capability probe tdd-builder", "cmd": ""}, {"ts": "2026-10-08T08:02:40.953Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "subagent.start", "ref": null, "status": "unknown", "note": "Lane A voice tracer", "cmd": ""}, {"ts": "2026-10-08T08:19:43.757Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "other-write", "ref": null, "status": "unknown", "note": "", "cmd": ""}, {"ts": "2026-10-08T08:19:43.757Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "merge", "ref": "03abf55e8744", "status": "unknown", "note": "", "cmd": ""}, {"ts": "2026-10-08T08:20:05.045Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "subagent.start", "ref": null, "status": "unknown", "note": "Backend review wave 1", "cmd": ""}, {"ts": "2026-10-08T08:20:11.726Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "subagent.start", "ref": null, "status": "unknown", "note": "LLM security review wave 1", "cmd": ""}, {"ts": "2026-10-08T08:20:16.849Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "subagent.start", "ref": null, "status": "unknown", "note": "Frontend review wave 1", "cmd": ""}, {"ts": "2026-10-08T08:36:44.284Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "commit", "ref": "ab5eb3705211", "status": "unknown", "note": "", "cmd": ""}, {"ts": "2026-10-08T08:36:44.285Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "note", "ref": "ab5eb3705211", "status": "permanent", "note": "INDEX omission blocked wave-1 landing; operator said yes", "cmd": ""}, {"ts": "2026-10-08T08:37:29.251Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "subagent.start", "ref": null, "status": "unknown", "note": "Wave 1 fix round", "cmd": ""}, {"ts": "2026-10-08T08:38:10.528Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "commit", "ref": "47074ad65cbd", "status": "unknown", "note": "", "cmd": ""}, {"ts": "2026-10-08T08:38:10.529Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "note", "ref": "47074ad65cbd", "status": "permanent", "note": "wave-1 gate records committed at the gate (L149)", "cmd": ""}, {"ts": "2026-10-08T08:38:10.672Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "other-write", "ref": null, "status": "unknown", "note": "", "cmd": ""}, {"ts": "2026-10-08T08:42:28.876Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "other-write", "ref": null, "status": "unknown", "note": "", "cmd": ""}, {"ts": "2026-10-08T08:42:28.876Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "merge", "ref": "b581ab70851f", "status": "unknown", "note": "", "cmd": ""}, {"ts": "2026-10-08T08:42:36.629Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "subagent.start", "ref": null, "status": "unknown", "note": "Re-review wave 1 fix", "cmd": ""}, {"ts": "2026-10-08T08:49:22.850Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "other-write", "ref": null, "status": "unknown", "note": "", "cmd": ""}, {"ts": "2026-10-08T08:49:22.850Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "commit", "ref": "7960d4c2f309", "status": "unknown", "note": "", "cmd": ""}, {"ts": "2026-10-08T08:50:42.291Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "commit", "ref": "cbd3274863ef", "status": "unknown", "note": "", "cmd": ""}, {"ts": "2026-10-08T08:50:42.293Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "note", "ref": "cbd3274863ef", "status": "permanent", "note": "wave-1 fix rounds landed (0b891c9); records committed at the gate", "cmd": ""}, {"ts": "2026-10-08T08:50:42.372Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "other-write", "ref": null, "status": "unknown", "note": "", "cmd": ""}, {"ts": "2026-10-13T14:17:52.837Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "commit", "ref": "8c483cd9dfa3", "status": "unknown", "note": "", "cmd": ""}, {"ts": "2026-10-13T14:17:52.837Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "note", "ref": "8c483cd9dfa3", "status": "permanent", "note": "wave-1 live smoke: tools push half-failed; ids recorded so agents push attaches them", "cmd": ""}, {"ts": "2026-10-13T14:18:44.807Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "commit", "ref": "ded6372c71c3", "status": "unknown", "note": "", "cmd": ""}, {"ts": "2026-10-13T14:18:44.809Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "note", "ref": "ded6372c71c3", "status": "permanent", "note": "wave-1 live smoke: agent created; CLI wrote its real registry shape", "cmd": ""}, {"ts": "2026-10-13T14:37:31.265Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "commit", "ref": "fe36b79f6d2a", "status": "unknown", "note": "", "cmd": ""}, {"ts": "2026-10-13T14:37:31.267Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "note", "ref": "fe36b79f6d2a", "status": "permanent", "note": "wave-1 live smoke fixes: tool auth header, transcript, word search", "cmd": ""}, {"ts": "2026-10-13T14:46:51.099Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "commit", "ref": "b855595987a2", "status": "unknown", "note": "", "cmd": ""}, {"ts": "2026-10-13T14:46:51.100Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "note", "ref": "b855595987a2", "status": "permanent", "note": "operator: fix the hash bug before wave 2", "cmd": ""}, {"ts": "2026-10-13T14:46:51.195Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "other-write", "ref": null, "status": "unknown", "note": "", "cmd": ""}, {"ts": "2026-10-13T14:48:14.294Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "commit", "ref": "eabce91324de", "status": "unknown", "note": "", "cmd": ""}, {"ts": "2026-10-13T14:48:14.295Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "note", "ref": "eabce91324de", "status": "permanent", "note": "go-time discovery write-back before wave 2 fan-out", "cmd": ""}, {"ts": "2026-10-13T14:48:14.831Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "other-write", "ref": null, "status": "unknown", "note": "", "cmd": ""}, {"ts": "2026-10-13T14:48:39.171Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "subagent.start", "ref": null, "status": "unknown", "note": "Lane B voice tools backend", "cmd": ""}, {"ts": "2026-10-13T14:48:49.566Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "subagent.start", "ref": null, "status": "unknown", "note": "Lane C voice page", "cmd": ""}, {"ts": "2026-10-13T14:48:58.286Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "subagent.start", "ref": null, "status": "unknown", "note": "Lane D agent config tests", "cmd": ""}, {"ts": "2026-10-13T15:12:06.484Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "other-write", "ref": null, "status": "unknown", "note": "", "cmd": ""}, {"ts": "2026-10-13T15:12:25.037Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "destructive", "ref": "0c3f712", "status": "unknown", "note": "", "cmd": ""}, {"ts": "2026-10-13T15:12:34.059Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "other-write", "ref": null, "status": "unknown", "note": "", "cmd": ""}, {"ts": "2026-10-13T15:12:34.059Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "commit", "ref": "4aff4add221f", "status": "unknown", "note": "", "cmd": ""}, {"ts": "2026-10-13T15:14:47.812Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "subagent.start", "ref": null, "status": "unknown", "note": "Backend review wave 2", "cmd": ""}, {"ts": "2026-10-13T15:14:54.054Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "subagent.start", "ref": null, "status": "unknown", "note": "LLM security review wave 2", "cmd": ""}, {"ts": "2026-10-13T15:15:00.937Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "subagent.start", "ref": null, "status": "unknown", "note": "Frontend review wave 2", "cmd": ""}, {"ts": "2026-10-13T15:22:04.759Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "other-write", "ref": null, "status": "error", "note": "", "cmd": ""}, {"ts": "2026-10-13T15:22:15.992Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "other-write", "ref": null, "status": "error", "note": "", "cmd": ""}, {"ts": "2026-10-13T15:22:22.968Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "other-write", "ref": null, "status": "unknown", "note": "", "cmd": ""}, {"ts": "2026-10-13T15:23:22.196Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "commit", "ref": "5d533234ec86", "status": "unknown", "note": "", "cmd": ""}, {"ts": "2026-10-13T15:23:22.198Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "note", "ref": "5d533234ec86", "status": "permanent", "note": "wave-2 gate records committed at the gate (L149)", "cmd": ""}, {"ts": "2026-10-13T15:23:22.283Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "other-write", "ref": null, "status": "unknown", "note": "", "cmd": ""}, {"ts": "2026-10-13T15:23:41.931Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "subagent.start", "ref": null, "status": "unknown", "note": "Wave 2 fix round backend", "cmd": ""}, {"ts": "2026-10-13T15:23:55.261Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "subagent.start", "ref": null, "status": "unknown", "note": "Wave 2 fix round frontend", "cmd": ""}, {"ts": "2026-10-13T15:34:42.480Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "other-write", "ref": null, "status": "unknown", "note": "", "cmd": ""}, {"ts": "2026-10-13T15:35:43.555Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "subagent.start", "ref": null, "status": "unknown", "note": "Re-review wave 2 backend fix", "cmd": ""}, {"ts": "2026-10-13T15:35:49.053Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "subagent.start", "ref": null, "status": "unknown", "note": "Re-review wave 2 frontend fix", "cmd": ""}, {"ts": "2026-10-13T15:39:26.419Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "other-write", "ref": null, "status": "unknown", "note": "", "cmd": ""}, {"ts": "2026-10-13T15:39:26.419Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "commit", "ref": "4f3ba26c8789", "status": "unknown", "note": "", "cmd": ""}, {"ts": "2026-10-13T15:41:16.287Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "other-write", "ref": null, "status": "unknown", "note": "", "cmd": ""}, {"ts": "2026-10-13T15:41:16.287Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "commit", "ref": "5d53323", "status": "unknown", "note": "", "cmd": ""}, {"ts": "2026-10-13T15:41:49.626Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "commit", "ref": "062856c92813", "status": "unknown", "note": "", "cmd": ""}, {"ts": "2026-10-13T15:41:49.627Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "note", "ref": "062856c92813", "status": "permanent", "note": "fix-round paths were unowned; land_wave refused them", "cmd": ""}, {"ts": "2026-10-13T15:42:03.529Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "other-write", "ref": null, "status": "unknown", "note": "", "cmd": ""}, {"ts": "2026-10-13T15:42:31.538Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "commit", "ref": "40b668a73c38", "status": "unknown", "note": "", "cmd": ""}, {"ts": "2026-10-13T15:42:31.539Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "note", "ref": "40b668a73c38", "status": "permanent", "note": "wave-2 fix rounds landed (1eac401); records at the gate", "cmd": ""}, {"ts": "2026-10-13T15:42:31.750Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "other-write", "ref": null, "status": "unknown", "note": "", "cmd": ""}, {"ts": "2026-10-13T15:51:29.765Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "commit", "ref": "2ffef59ea831", "status": "unknown", "note": "", "cmd": ""}, {"ts": "2026-10-13T15:51:29.766Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "note", "ref": "2ffef59ea831", "status": "permanent", "note": "operator said yes, all: tools, agent and tests synced to ElevenLabs", "cmd": ""}, {"ts": "2026-10-13T15:57:48.633Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "commit", "ref": "3c7b44238e3d", "status": "unknown", "note": "", "cmd": ""}, {"ts": "2026-10-13T15:57:48.634Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "note", "ref": "3c7b44238e3d", "status": "permanent", "note": "preflight read a backticked fixture name as a path; wave 3 needs a green preflight", "cmd": ""}, {"ts": "2026-10-13T15:58:05.777Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "subagent.start", "ref": null, "status": "unknown", "note": "Lane E Scribe voice notes", "cmd": ""}, {"ts": "2026-10-13T16:05:14.664Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "tell.read", "ref": "5", "status": "unknown", "note": "", "cmd": ""}, {"ts": "2026-10-13T16:09:26.335Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "tell.read", "ref": "5", "status": "unknown", "note": "", "cmd": ""}, {"ts": "2026-10-13T16:09:51.068Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "tell", "ref": "5", "status": "unknown", "note": "", "cmd": ""}, {"ts": "2026-10-13T16:09:51.158Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "tell.outcome", "ref": "5", "status": "unknown", "note": "", "cmd": ""}, {"ts": "2026-10-13T16:09:51.249Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "tell.outcome", "ref": "5", "status": "unknown", "note": "", "cmd": ""}, {"ts": "2026-10-13T16:13:15.218Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "note", "ref": null, "status": "temporary", "note": "elevenlabs-voice-demo: operator approved merging origin/main (hlc#12/#13 deps) after wave 3 lands, before wave 4; then uv sync + voice and full suites", "cmd": ""}, {"ts": "2026-10-13T16:23:10.839Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "tell.read", "ref": "6", "status": "unknown", "note": "", "cmd": ""}, {"ts": "2026-10-13T16:23:14.687Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "tell.outcome", "ref": "6", "status": "unknown", "note": "", "cmd": ""}, {"ts": "2026-10-13T16:35:20.590Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "other-write", "ref": null, "status": "unknown", "note": "", "cmd": ""}, {"ts": "2026-10-13T16:35:30.539Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "subagent.start", "ref": null, "status": "unknown", "note": "Backend+LLM review wave 3", "cmd": ""}, {"ts": "2026-10-13T16:35:36.351Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "subagent.start", "ref": null, "status": "unknown", "note": "Frontend review wave 3", "cmd": ""}, {"ts": "2026-10-13T16:41:48.876Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "commit", "ref": "ad3d4350387d", "status": "unknown", "note": "", "cmd": ""}, {"ts": "2026-10-13T16:41:48.881Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "note", "ref": "ad3d4350387d", "status": "permanent", "note": "wave-3 gate records; operator ruled Safari mp4 + single-digit rewrite", "cmd": ""}, {"ts": "2026-10-13T16:41:49.126Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "other-write", "ref": null, "status": "unknown", "note": "", "cmd": ""}, {"ts": "2026-10-13T16:42:25.343Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "subagent.start", "ref": null, "status": "unknown", "note": "Wave 3 fix round", "cmd": ""}, {"ts": "2026-10-13T16:58:56.601Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "commit", "ref": "8faa3b58d4a0", "status": "unknown", "note": "", "cmd": ""}, {"ts": "2026-10-13T16:58:56.603Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "note", "ref": "8faa3b58d4a0", "status": "permanent", "note": "land_wave checks per-lane ownership; fix touched budget.py and new state files", "cmd": ""}, {"ts": "2026-10-13T17:01:22.368Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "other-write", "ref": null, "status": "unknown", "note": "", "cmd": ""}, {"ts": "2026-10-13T17:05:43.174Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "subagent.start", "ref": null, "status": "unknown", "note": "Re-review wave 3 fix round", "cmd": ""}, {"ts": "2026-10-13T17:09:37.718Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "other-write", "ref": null, "status": "unknown", "note": "", "cmd": ""}, {"ts": "2026-10-13T17:09:37.718Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "merge", "ref": "f951be3a5be4", "status": "unknown", "note": "", "cmd": ""}, {"ts": "2026-10-13T17:09:58.484Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "commit", "ref": "e0b90e31883d", "status": "unknown", "note": "", "cmd": ""}, {"ts": "2026-10-13T17:09:58.485Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "note", "ref": "e0b90e31883d", "status": "permanent", "note": "wave-3 gate closed with landed sha; clears chat 6's lane-E wait", "cmd": ""}, {"ts": "2026-10-13T17:09:59.054Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "other-write", "ref": null, "status": "unknown", "note": "", "cmd": ""}, {"ts": "2026-10-13T17:15:37.728Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "commit", "ref": "1d1476142875", "status": "unknown", "note": "", "cmd": ""}, {"ts": "2026-10-13T17:17:42.871Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "note", "ref": "1d1476142875", "status": "permanent", "note": "committed 1d14761: chat 1's dotfiles-ai -> ai-wow repoint (pyproject, uv.lock, worktrees symlink) \u2014 operator approved, unblocks origin/main merge", "cmd": ""}, {"ts": "2026-10-13T17:17:43.188Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "merge", "ref": "c89327f74d44", "status": "unknown", "note": "", "cmd": ""}, {"ts": "2026-10-13T17:22:12.453Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "commit", "ref": "202bed704f61", "status": "unknown", "note": "", "cmd": ""}, {"ts": "2026-10-13T17:22:12.455Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "note", "ref": "202bed704f61", "status": "permanent", "note": "lane Z step 1: rehearsal snapshot of the live demo team", "cmd": ""}, {"ts": "2026-10-13T17:22:12.639Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "other-write", "ref": null, "status": "unknown", "note": "", "cmd": ""}, {"ts": "2026-10-13T17:22:39.224Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "subagent.start", "ref": null, "status": "unknown", "note": "Lane Z showcase export script", "cmd": ""}, {"ts": "2026-10-13T17:28:03.166Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "commit", "ref": "8353fdecc646", "status": "unknown", "note": "", "cmd": ""}, {"ts": "2026-10-13T17:28:03.169Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "note", "ref": "8353fdecc646", "status": "permanent", "note": "lane Z: showcase export tooling (publishing still needs the operator's yes)", "cmd": ""}, {"ts": "2026-10-13T17:28:03.254Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "other-write", "ref": null, "status": "unknown", "note": "", "cmd": ""}, {"ts": "2026-10-13T17:29:11.624Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "commit", "ref": "d9161b09b6b2", "status": "unknown", "note": "", "cmd": ""}, {"ts": "2026-10-13T17:29:11.625Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "note", "ref": "d9161b09b6b2", "status": "permanent", "note": "lane Z: runbook + demo script drafts; numbers filled at rehearsal", "cmd": ""}, {"ts": "2026-10-13T17:29:12.194Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "other-write", "ref": null, "status": "unknown", "note": "", "cmd": ""}, {"ts": "2026-10-13T17:50:08.107Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "commit", "ref": "b9afd1cbbf42", "status": "unknown", "note": "", "cmd": ""}, {"ts": "2026-10-13T17:50:08.108Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "note", "ref": "b9afd1cbbf42", "status": "permanent", "note": "lane Z: live agent tests green 4/4 (req #550)", "cmd": ""}, {"ts": "2026-10-13T17:50:08.245Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "other-write", "ref": null, "status": "unknown", "note": "", "cmd": ""}, {"ts": "2026-10-13T19:41:43.371Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "subagent.start", "ref": null, "status": "unknown", "note": "Voice page call-button fix", "cmd": ""}, {"ts": "2026-10-13T19:48:34.967Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "other-write", "ref": null, "status": "unknown", "note": "", "cmd": ""}, {"ts": "2026-10-13T19:49:01.490Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "commit", "ref": "a893b04e2f2f", "status": "unknown", "note": "", "cmd": ""}, {"ts": "2026-10-13T19:49:01.491Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "note", "ref": "a893b04e2f2f", "status": "permanent", "note": "rehearsal: push-to-talk habit hung up calls; fix landed 46eac12", "cmd": ""}, {"ts": "2026-10-13T19:49:01.720Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "other-write", "ref": null, "status": "unknown", "note": "", "cmd": ""}, {"ts": "2026-10-13T20:05:58.351Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "commit", "ref": "34d7b6b153ba", "status": "unknown", "note": "", "cmd": ""}, {"ts": "2026-10-13T20:05:58.351Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "note", "ref": "34d7b6b153ba", "status": "permanent", "note": "lane Z: real latencies + webhook minutes from the rehearsal", "cmd": ""}, {"ts": "2026-10-13T20:12:33.160Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "subagent.start", "ref": null, "status": "unknown", "note": "Voice demo preflight script", "cmd": ""}, {"ts": "2026-10-13T20:15:59.155Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "commit", "ref": "1b4d9984628b", "status": "unknown", "note": "", "cmd": ""}, {"ts": "2026-10-13T20:15:59.158Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "note", "ref": "1b4d9984628b", "status": "permanent", "note": "operator: enable agent auth before publishing ids", "cmd": ""}, {"ts": "2026-10-13T20:17:38.510Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "commit", "ref": "a498b76b49fa", "status": "unknown", "note": "", "cmd": ""}, {"ts": "2026-10-13T20:17:38.511Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "note", "ref": "a498b76b49fa", "status": "permanent", "note": "lane Z: make the demo reproducible with a no-quota preflight", "cmd": ""}, {"ts": "2026-10-13T20:17:38.597Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "other-write", "ref": null, "status": "unknown", "note": "", "cmd": ""}, {"ts": "2026-10-13T20:18:20.781Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "commit", "ref": "8c8c7e953f5b", "status": "unknown", "note": "", "cmd": ""}, {"ts": "2026-10-13T20:18:20.782Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "note", "ref": "8c8c7e953f5b", "status": "permanent", "note": "lane Z: showcase README versioned before any publish", "cmd": ""}, {"ts": "2026-10-13T20:18:21.003Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "other-write", "ref": null, "status": "unknown", "note": "", "cmd": ""}, {"ts": "2026-10-13T20:44:44.688Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "subagent.start", "ref": null, "status": "unknown", "note": "Backend review wave 4 scripts", "cmd": ""}, {"ts": "2026-10-13T20:44:50.240Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "subagent.start", "ref": null, "status": "unknown", "note": "Frontend review call-button fix", "cmd": ""}, {"ts": "2026-10-13T20:45:01.068Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "commit", "ref": "fa6a769b52ac", "status": "unknown", "note": "", "cmd": ""}, {"ts": "2026-10-13T20:45:01.069Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "note", "ref": "fa6a769b52ac", "status": "permanent", "note": "close-out: lane Z record (video deferred, publish held)", "cmd": ""}, {"ts": "2026-10-13T20:45:01.351Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "other-write", "ref": null, "status": "unknown", "note": "", "cmd": ""}, {"ts": "2026-10-13T20:47:21.842Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "other-write", "ref": null, "status": "unknown", "note": "", "cmd": ""}, {"ts": "2026-10-13T20:48:33.330Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "other-write", "ref": null, "status": "unknown", "note": "", "cmd": ""}, {"ts": "2026-10-13T20:48:33.330Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "merge", "ref": "b095c2260397", "status": "unknown", "note": "", "cmd": ""}, {"ts": "2026-10-13T20:49:03.158Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "commit", "ref": "629ace6a7885", "status": "unknown", "note": "", "cmd": ""}, {"ts": "2026-10-13T20:49:03.159Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "note", "ref": "629ace6a7885", "status": "permanent", "note": "wave-4 fix round needs these paths owned to land", "cmd": ""}, {"ts": "2026-10-13T20:49:03.331Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "subagent.start", "ref": null, "status": "unknown", "note": "Wave 4 fix round export", "cmd": ""}, {"ts": "2026-10-13T20:49:19.002Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "commit", "ref": "72f99e719019", "status": "unknown", "note": "", "cmd": ""}, {"ts": "2026-10-13T20:49:19.003Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "note", "ref": "72f99e719019", "status": "permanent", "note": "wave-4 review warning closed (a67970e)", "cmd": ""}, {"ts": "2026-10-13T20:49:19.599Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "other-write", "ref": null, "status": "unknown", "note": "", "cmd": ""}, {"ts": "2026-10-13T20:54:26.576Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "subagent.start", "ref": null, "status": "unknown", "note": "Re-review export Critical fix", "cmd": ""}, {"ts": "2026-10-13T20:58:48.664Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "other-write", "ref": null, "status": "unknown", "note": "", "cmd": ""}, {"ts": "2026-10-13T20:58:48.664Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "merge", "ref": "cd60711170ce", "status": "unknown", "note": "", "cmd": ""}, {"ts": "2026-10-13T20:59:11.520Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "commit", "ref": "b7663e62ebba", "status": "unknown", "note": "", "cmd": ""}, {"ts": "2026-10-13T20:59:11.521Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "note", "ref": "b7663e62ebba", "status": "permanent", "note": "wave-4 gate closed: export Critical fixed and re-reviewed (aff4b96)", "cmd": ""}, {"ts": "2026-10-13T20:59:11.654Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "other-write", "ref": null, "status": "unknown", "note": "", "cmd": ""}, {"ts": "2026-10-13T20:59:41.221Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "subagent.start", "ref": null, "status": "unknown", "note": "Ship-check voice demo", "cmd": ""}, {"ts": "2026-10-13T21:08:32.630Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "other-write", "ref": null, "status": "unknown", "note": "", "cmd": ""}, {"ts": "2026-10-13T21:09:26.198Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "subagent.start", "ref": null, "status": "unknown", "note": "Reconcile tracker vs records", "cmd": ""}, {"ts": "2026-10-13T21:18:44.539Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "commit", "ref": "2471ab046b44", "status": "unknown", "note": "", "cmd": ""}, {"ts": "2026-10-13T21:18:44.541Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "note", "ref": "2471ab046b44", "status": "permanent", "note": "elevenlabs-voice-demo close-out before the registry flip", "cmd": ""}, {"ts": "2026-10-13T21:18:45.499Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "other-write", "ref": null, "status": "unknown", "note": "", "cmd": ""}, {"ts": "2026-10-13T21:21:35.804Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "other-write", "ref": null, "status": "unknown", "note": "", "cmd": ""}, {"ts": "2026-10-13T21:21:42.137Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "note", "ref": null, "status": "permanent", "note": "elevenlabs-voice-demo: removed 25 run worktrees with git worktree remove --force after auditing every leftover file (hook files, caches, or older copies of what main holds); all 40 lane/integration branches kept", "cmd": ""}, {"ts": "2026-10-13T21:22:01.377Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "commit", "ref": "0ffac9c38b77", "status": "unknown", "note": "", "cmd": ""}, {"ts": "2026-10-13T21:22:01.379Z", "session": "ae32b7b1-46f5-442e-a0a5-ba1727ecd202", "ordinal": 4, "kind": "note", "ref": "0ffac9c38b77", "status": "permanent", "note": "close-out gate passed; run shipped", "cmd": ""}], "lessons": []}; }
+  catch (e) { $("meta").textContent = "Could not load unit-data.json — is `git-timeline serve` running?"; return; }
+  if (r.status === 404) { $("title").textContent = STEM; $("meta").textContent = "Unknown run: no tracker.json for this stem in any known repo."; showIndexLink(); return; }
+  if (!r.ok) { $("meta").textContent = `unit-data.json failed (${d && d.error || r.status}).`; return; }
+  if (!STEM) return renderIndex(d.runs || []);
+  if (d.ambiguous) return renderAmbiguous(d.ambiguous);
+  renderRun(d);
+}
+
+function showIndexLink() { $("lede").replaceChildren(el("a", { href: "/run.html" }, "Back to every run")); }
+
+function renderIndex(runs) {
+  document.title = "Runs · every mow go";
+  $("kicker").textContent = "every repo · runs";
+  $("title").textContent = "Every run";
+  $("lede").textContent = "Each /mow go run in every known repo. Open one to see its chats, commits, board rows, CAM lines and documents.";
+  $("meta").textContent = `${runs.length} run${runs.length === 1 ? "" : "s"}`;
+  $("index").hidden = false;
+  fill_list("index-list", runs.map(x => li(day(x.started), el("a", { href: runHref(x.stem, x.repo) }, `${x.stem} · `, el("span", { style: "color:var(--muted)" }, x.title || "")),
+    el("span", {}, status(x.status), ` ${k(x.tokens)} tok · ${x.sessions_how} · ${x.repo}`))), "No tracker.json runs found.");
+}
+
+function renderAmbiguous(list) {
+  $("title").textContent = STEM;
+  $("lede").textContent = "This stem names a run in more than one repo. Pick one:";
+  $("meta").textContent = `${list.length} candidates`;
+  $("index").hidden = false;
+  $("h-index").textContent = "Candidates";
+  fill_list("index-list", list.map(x => li(x.repo, el("a", { href: runHref(x.stem, x.repo) }, `${x.repo} / ${x.stem}`), when(x.started))), "");
+}
+
+function renderRun(d) {
+  const e = d.effort || {};
+  document.title = `Run · ${d.stem}`;
+  $("kicker").textContent = `${d.repo} · run`;
+  $("status").replaceChildren(el("i", { class: "dot " + tone(d.status) }), d.status || "—");
+  $("title").textContent = d.stem;
+  $("lede").textContent = d.title || "";
+  const waves = (d.tracker && d.tracker.waves) || [];
+  const lanes = waves.reduce((n, w) => n + w.lanes.length, 0);
+  const end = d.live ? "now" : when(d.ended);
+  $("meta").textContent = `${when(d.started)} → ${end} · ${waves.length} wave${waves.length === 1 ? "" : "s"} · ${lanes} lane${lanes === 1 ? "" : "s"}`
+    + (d.brainstorm ? ` · brainstorm ${d.brainstorm}` : "");
+  $("run").hidden = false;
+
+  const ts = e.tokens_split || {};
+  const open = (d.board || []).filter(b => b.status && !["done", "cancelled", "disabled"].includes(b.status)).length;
+  const tiles = [
+    [dur(e.wall_s || 0), `wall time · ${isNaN(ms(d.started)) ? "—" : hm(d.started)} → ${d.live ? "now" : isNaN(ms(d.ended)) ? "—" : hm(d.ended)}`],
+    [dur(e.active_s || 0), `subagent time · lanes ${dur(e.lanes_active_s || 0)} · gate & fixes ${dur(e.gate_fixes_active_s || 0)}`],
+    [dur(e.orchestrator_active_s || 0), "orchestrator active in the window"],
+    [k(Object.values(e.tokens || {}).reduce((a, b) => a + b, 0)), `tokens · chat ${k(ts.chat)} · lanes ${k(ts.lanes)} · gate & fixes ${k(ts.gate_fixes)}`],
+    [String(e.commits ?? (d.commits || []).length), "commits on owned paths"],
+    [`${open} open`, `of ${(d.board || []).length} board rows`],
+  ];
+  $("stats").replaceChildren(...tiles.map(([b, s]) => el("div", { class: "stat" }, el("b", {}, b), el("span", {}, s))));
+
+  drawRun(d, waves);
+
+  const recorded = (d.chats || []).some(c => c.how === "recorded");
+  $("chats-sub").replaceChildren(...(recorded ? ["from ", el("code", {}, "tracker.json sessions")]
+    : ["no ", el("code", {}, "sessions"), " in tracker.json · from ", el("code", {}, "mow_spend.owners()")]));
+  $("chats-note").hidden = recorded;
+  fill_list("chats", (d.chats || []).map(c => li(c.ordinal != null ? `chat ${c.ordinal}` : "chat",
+    el("a", { href: `/cam.html#${encodeURIComponent(d.repo)}` }, `${c.session.slice(0, 8)} · ${c.title || (c.role ? c.role + " the run" : "")}`),
+    el("span", {}, el("span", { class: "st" }, el("i", { class: "dot " + (c.how === "recorded" ? "ok" : "inf") }), c.label), ` ${c.how === "ambiguous" ? "ambiguous · " : ""}${k(c.tokens)} tok total`))),
+    "No chat recorded or inferred for this run.");
+
+  fill_list("board", (d.board || []).map(b => li(b.status || b.title ? el("a", { href: taskHref(b.id, d.repo) }, `#${b.id}`) : `#${b.id}`,
+    b.title || "not on the board", b.status || "—",
+    b.status === "done" ? "done" : b.status ? "open" : "")), "No board rows cite this run.");
+  fill_list("commits", (d.commits || []).map(c => li(c.short, c.subject || "", c.source)), "No commits on owned paths in the window, none cited.");
+  const who = (d.chats || []).map(c => c.ordinal != null ? `chat ${c.ordinal}` : c.session.slice(0, 8)).join(", ");
+  $("cam-sub").textContent = who ? `${who} inside the window` : "no run chats";
+  fill_list("cam", (d.cam || []).map(c => li(hm(c.ts), c.note || [c.kind, c.ref].filter(Boolean).join(" ") || "—", c.kind)),
+    "No CAM lines by the run's chats inside the window.");
+  const sids = (d.chats || []).map(c => c.session.slice(0, 8)).join(" or ");
+  fill_list("lessons", (d.lessons || []).map(x => li(x.id, x.rule)), `None cite ${d.stem}${sids ? " or " + sids : ""}.`);
+
+  $("docs-sub").textContent = `docs/plans/${d.stem}/ · plain text`;
+  const docs = d.documents || [];
+  $("docs").replaceChildren(...(docs.length ? docs.map(doc => {
+    const heads = doc.text.split("\n").filter(l => /^## /.test(l)).slice(0, 3).map(l => l.slice(3).trim()).join(" · ");
+    return el("details", { class: "doc" }, el("summary", {}, el("span", {}, doc.path), el("span", { class: "meta" }, heads)),
+              el("pre", {}, doc.text));
+  }) : [el("p", { class: "empty" }, "No plan documents in this run's folder.")]));
+}
+
+// The static run drawing: waves -> lanes -> agents on one time axis, bars coloured by status.
+function drawRun(d, waves) {
+  const now = Date.now();
+  const t0 = ms(d.started), t1 = d.live ? now : ms(d.ended);
+  const box = $("draw");
+  if (!waves.length || isNaN(t0) || isNaN(t1) || t1 <= t0) {
+    box.replaceChildren(el("p", { class: "empty" }, "No waves with times in tracker.json.")); return;
+  }
+  const L = 120, R = 790, W = 800, rowH = 24;
+  const x = t => L + (Math.min(Math.max(t, t0), t1) - t0) / (t1 - t0) * (R - L);
+  const rows = [];
+  for (const w of waves) {
+    rows.push({ head: `Wave ${w.wave}` });
+    for (const ln of w.lanes) rows.push({ lane: ln });
+    if (w.gate && (w.gate.agents || []).length) rows.push({ gate: w.gate });     // a gate with no agents drew nothing
+  }
+  const H = rows.length * rowH + 34;
+  const s = svg("svg", { viewBox: `0 0 ${W} ${H}`, width: "100%", role: "img",
+    "aria-label": `${waves.length} waves on one time axis from ${hm(d.started)} to ${d.live ? "now" : hm(d.ended)}` });
+  const g = svg("g", { stroke: "var(--line)" });
+  g.append(svg("line", { x1: L, y1: H - 20, x2: R, y2: H - 20 }), svg("line", { x1: L, y1: 6, x2: L, y2: H - 20 }));
+  const ticks = 4;
+  for (let i = 1; i <= ticks; i++) {
+    const tx = L + i * (R - L) / ticks;
+    g.append(svg("line", { x1: tx, y1: 6, x2: tx, y2: H - 20, "stroke-dasharray": "2 3" }));
+  }
+  s.append(g);
+  for (let i = 0; i <= ticks; i++) {
+    const t = t0 + i * (t1 - t0) / ticks;
+    s.append(svg("text", { x: L + i * (R - L) / ticks, y: H - 5, "text-anchor": i === 0 ? "start" : i === ticks ? "end" : "middle" }, hm(t)));
+  }
+  const end = a => a.ended ? ms(a.ended) : (d.live ? now : t1);
+  rows.forEach((row, i) => {
+    const y = 8 + i * rowH;
+    if (row.head) { s.append(svg("text", { x: 4, y: y + 12, class: "lbl" }, row.head)); return; }
+    if (row.lane) {
+      const ln = row.lane;
+      s.append(svg("text", { x: 4, y: y + 12 }, `${ln.lane} ${ln.title}`.slice(0, 18)));
+      const agents = (ln.agents || []).filter(a => !isNaN(ms(a.started)));
+      let right = L, left = R, tok = 0, span = 0;
+      for (const a of agents) {
+        const a0 = x(ms(a.started)), a1 = Math.max(x(end(a)), a0 + 3);
+        left = Math.min(left, a0);
+        const bar = svg("rect", { x: a0, y: y + 2, width: a1 - a0, height: 14, rx: 3, fill: fill(a.status || ln.status) });
+        bar.append(svg("title", {}, `${a.name || "agent"} · ${a.status || "—"} · ${when(a.started)} → ${a.ended ? when(a.ended) : "now"}`));
+        s.append(bar);
+        right = Math.max(right, a1); tok += a.tokens || 0; span += (end(a) - ms(a.started)) / 1000;
+      }
+      if (!agents.length) { s.append(svg("text", { x: L + 6, y: y + 13 }, "no agent times")); return; }
+      const label = `${tok ? k(tok) + " tok · " : ""}${dur(span)}`;
+      const flip = right > R - 120;         // no room after the bar: the label sits before it, as the mockup's lane Z
+      s.append(svg("text", { x: flip ? left - 6 : right + 6, y: y + 13, "text-anchor": flip ? "end" : "start" }, label));
+      return;
+    }
+    const gt = row.gate, ags = gt.agents || [];
+    const g0 = ms(gt.started) || Math.min(...ags.map(a => ms(a.started)).filter(v => !isNaN(v)));
+    const g1 = gt.ended ? ms(gt.ended) : Math.max(...ags.map(end).filter(v => !isNaN(v)));
+    s.append(svg("text", { x: 4, y: y + 12 }, "gate"));
+    if (isNaN(g0) || !isFinite(g0) || !isFinite(g1)) return;
+    const a0 = x(g0), a1 = Math.max(x(g1), a0 + 3);
+    const bar = svg("rect", { x: a0, y: y + 2, width: a1 - a0, height: 14, rx: 3, fill: "none", stroke: fill(gt.status), "stroke-dasharray": "4 3" });
+    bar.append(svg("title", {}, `gate · ${gt.status || "—"} · ${ags.length} agents`));
+    s.append(bar);
+    const tok = ags.reduce((n, a) => n + (a.tokens || 0), 0);
+    // A long gate carries its label inside the dashed box (the mockup's); a short one beside it, where there is room.
+    const inside = a1 - a0 >= 280, after = a1 < R - 220;
+    s.append(svg("text", { x: inside ? (a0 + a1) / 2 : after ? a1 + 6 : a0 - 6, y: y + 13,
+      "text-anchor": inside ? "middle" : after ? "start" : "end" },
+      `review + fix rounds · ${ags.length} agent${ags.length === 1 ? "" : "s"}${tok ? " · " + k(tok) + " tok" : ""} · ${dur((g1 - g0) / 1000)}`));
+  });
+  box.replaceChildren(s);
+}
+
+main();
+</script>
+</body>
+</html>

@@ -1,0 +1,24 @@
+{
+  "type": "webhook",
+  "name": "draw_play",
+  "description": "Draw a new play from the coach's spoken call, using the team's own formations and concepts. Returns status 'drawn' with a draw_id (pass it to show_draw), 'unresolved' with notes (questions for the coach), 'rate_limited' with retry_after_seconds, 'timeout', or 'unavailable'.",
+  "response_timeout_secs": 40,
+  "api_schema": {
+    "url": "https://{{system__env_hlc_tunnel_host}}/voice-tools/draw",
+    "method": "POST",
+    "request_body_schema": {
+      "type": "object",
+      "properties": {
+        "call": {
+          "type": "string",
+          "description": "The play call as the coach said it, e.g. 'spread right hash, field mills, boundary smash'. Keep the coach's words; do not add routes or players they did not say."
+        }
+      },
+      "required": ["call"]
+    },
+    "request_headers": {
+      "Authorization": { "variable_name": "secret__hlc_voice_token" },
+      "X-HLC-Tool-Secret": { "secret_id": "DcBy7Zhf0rpUTiuRCd1N" }
+    }
+  }
+}

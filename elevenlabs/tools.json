@@ -1,0 +1,34 @@
+{
+  "tools": [
+    {
+      "name": "search_plays",
+      "type": "webhook",
+      "config": "tool_configs/search_plays.json",
+      "id": "tool_4801m4thc0w8e3y9br8qw4xxghcn"
+    },
+    {
+      "name": "show_play",
+      "type": "client",
+      "config": "tool_configs/show_play.json",
+      "id": "tool_5801m4thd872ffhtgwvj1bjsah0s"
+    },
+    {
+      "name": "get_play",
+      "type": "webhook",
+      "config": "tool_configs/get_play.json",
+      "id": "tool_6901m4tz9en4erc8ddvwzqdf8rsh"
+    },
+    {
+      "name": "draw_play",
+      "type": "webhook",
+      "config": "tool_configs/draw_play.json",
+      "id": "tool_1401m4tz9f79ed0aybn29m2xxrgx"
+    },
+    {
+      "name": "show_draw",
+      "type": "client",
+      "config": "tool_configs/show_draw.json",
+      "id": "tool_4901m4tz9frrfs2b3dzzz6vp2mst"
+    }
+  ]
+}

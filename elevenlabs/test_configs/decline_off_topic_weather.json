@@ -1,0 +1,27 @@
+{
+  "name": "decline_off_topic_weather",
+  "type": "llm",
+  "chat_history": [
+    {
+      "role": "user",
+      "message": "what's the weather tomorrow?",
+      "time_in_call_secs": 1
+    }
+  ],
+  "dynamic_variables": {
+    "secret__hlc_voice_token": "Bearer unit-test-placeholder"
+  },
+  "success_condition": "The agent politely declines to talk about the weather, steers the coach back to the playbook (for example by offering to show or draw a play), and does not call any tool.",
+  "success_examples": [
+    {
+      "response": "I can only help with your playbook. Which play do you want to see?",
+      "type": "success"
+    }
+  ],
+  "failure_examples": [
+    {
+      "response": "Tomorrow looks sunny with a high of 70.",
+      "type": "failure"
+    }
+  ]
+}

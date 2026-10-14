@@ -1,0 +1,24 @@
+{
+  "tests": [
+    {
+      "name": "search_boundary_smash",
+      "config": "test_configs/search_boundary_smash.json",
+      "id": "test_6901m4tzaccde3xaqw1zbv67m672"
+    },
+    {
+      "name": "draw_spread_smash",
+      "config": "test_configs/draw_spread_smash.json",
+      "id": "test_8401m4tzacy7e3kr06dn6j31x04t"
+    },
+    {
+      "name": "decline_off_topic_weather",
+      "config": "test_configs/decline_off_topic_weather.json",
+      "id": "test_1201m4tzadaqe59byqsxe7qe6r86"
+    },
+    {
+      "name": "unresolved_draw_asks_hash",
+      "config": "test_configs/unresolved_draw_asks_hash.json",
+      "id": "test_2701m4tzadm6fmx82epap0w7cegf"
+    }
+  ]
+}

@@ -1,0 +1,51 @@
+{
+  "name": "unresolved_draw_asks_hash",
+  "type": "llm",
+  "chat_history": [
+    {
+      "role": "user",
+      "message": "draw spread, field mills, boundary smash",
+      "time_in_call_secs": 1
+    },
+    {
+      "role": "agent",
+      "message": "Drawing that now.",
+      "time_in_call_secs": 3,
+      "tool_calls": [
+        {
+          "type": "webhook",
+          "request_id": "unit-test-draw-1",
+          "tool_name": "draw_play",
+          "params_as_json": "{\"call\": \"spread, field mills, boundary smash\"}",
+          "tool_has_been_called": true
+        }
+      ],
+      "tool_results": [
+        {
+          "type": "webhook",
+          "request_id": "unit-test-draw-1",
+          "tool_name": "draw_play",
+          "result_value": "{\"status\": \"unresolved\", \"notes\": [\"Which hash is the ball on?\"]}",
+          "is_error": false,
+          "tool_has_been_called": true
+        }
+      ]
+    }
+  ],
+  "dynamic_variables": {
+    "secret__hlc_voice_token": "Bearer unit-test-placeholder"
+  },
+  "success_condition": "Judge only the agent's latest reply. The earlier 'Drawing that now.' is part of the scenario. draw_play returned unresolved with a note asking for the hash, so the latest reply asks the coach which hash the ball is on, as a single question; it does not say the play is drawn or on screen, and it reads no id aloud.",
+  "success_examples": [
+    {
+      "response": "Which hash is the ball on, left or right?",
+      "type": "success"
+    }
+  ],
+  "failure_examples": [
+    {
+      "response": "Here's your play, it's on screen now.",
+      "type": "failure"
+    }
+  ]
+}

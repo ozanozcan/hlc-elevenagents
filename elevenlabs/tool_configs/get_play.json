@@ -1,0 +1,20 @@
+{
+  "type": "webhook",
+  "name": "get_play",
+  "description": "Get one saved play by id: its name, formation and variants (label + source call). Use it when the coach asks about a play search_plays already returned. Never read ids aloud.",
+  "response_timeout_secs": 10,
+  "api_schema": {
+    "url": "https://{{system__env_hlc_tunnel_host}}/voice-tools/plays/{play_id}",
+    "method": "GET",
+    "path_params_schema": {
+      "play_id": {
+        "type": "string",
+        "description": "The id of the play, exactly as returned by search_plays."
+      }
+    },
+    "request_headers": {
+      "Authorization": { "variable_name": "secret__hlc_voice_token" },
+      "X-HLC-Tool-Secret": { "secret_id": "DcBy7Zhf0rpUTiuRCd1N" }
+    }
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "name": "draw_spread_smash",
+  "type": "tool",
+  "chat_history": [
+    {
+      "role": "user",
+      "message": "draw spread right hash, field mills, boundary smash",
+      "time_in_call_secs": 1
+    }
+  ],
+  "dynamic_variables": {
+    "secret__hlc_voice_token": "Bearer unit-test-placeholder"
+  },
+  "tool_call_parameters": {
+    "referenced_tool": {
+      "id": "tool_1401m4tz9f79ed0aybn29m2xxrgx",
+      "type": "webhook"
+    },
+    "parameters": [
+      {
+        "path": "body.call",
+        "eval": { "type": "regex", "pattern": "(?i)spread.*smash" }
+      }
+    ],
+    "verify_absence": false
+  },
+  "check_any_tool_matches": true
+}
