@@ -16,6 +16,7 @@
 - [The agent as code, and its tests](#the-agent-as-code-and-its-tests) — config in the repo, 4/4 agent tests, a drift-checking preflight
 - [Measured numbers](#measured-numbers)
 - [What went wrong on the way](#what-went-wrong-on-the-way) — platform behaviour I only found in live calls
+- [What it cost to build](#what-it-cost-to-build) — sessions, tokens and dollars
 - [What is real and what is not](#what-is-real-and-what-is-not)
 - [Sources](#sources)
 
@@ -223,6 +224,22 @@ In the rehearsal itself, the call button hung up when a coach used it as push-to
 
 ---
 
+## What it cost to build
+
+I built this with AI coding agents (Claude Code on Claude Opus 5.5) run through my own harness, which plans the work, then fans it out to parallel subagents. The numbers below come from the session transcripts.
+
+| Measure | Value |
+|---|---|
+| Sessions | 4: plan, build, wrap-up, this write-up |
+| Subagents | 33, 31 of them in the build session |
+| Calendar time | 7 days (2026-10-07 to 2026-10-14); the work itself ran on 8 and 13 October |
+| Tokens processed | 464M, of which 456M were re-reads from the prompt cache |
+| API-equivalent cost | about $163 at Opus 5.5 list prices; build $127, plan $21, write-up $9, wrap-up $5 |
+
+I ran it on a subscription, so the dollar figure is what the same tokens would cost on the API, not a bill. Most of it is one build session that stayed open for six days and re-read its whole context on every turn. Next time I'd start a fresh session per wave.
+
+---
+
 ## What is real and what is not
 
 - **Real:** the ElevenAgents conversations, server tools called over the tunnel into HLC's API, Scribe transcription, HLC's production drawer and renderer, Postgres RLS, the signed webhook, and the 4/4 agent tests against the live agent.
@@ -243,4 +260,5 @@ In the rehearsal itself, the call button hung up when a coach used it as push-to
 - `web/app/voice/page.tsx`: `useConversation`, `startSession({ connectionType: "webrtc" })`, client tools
 - Agent test run and preflight output: saved from the 2026-10-13 rehearsal
 - Latency figures: ElevenLabs conversation logs and HLC server logs, 2026-10-13
+- Build cost: session transcripts, summed by `bin/mow_spend.py` in my harness repo and priced at Opus 5.5 list rates on 2026-10-15
 - Screenshots: live calls and the ElevenLabs dashboard, 2026-10-13 and 2026-10-14; phone-width captures from the Playwright UI tests
