@@ -1,0 +1,11 @@
+# gitleaks allowlist: one fingerprint per line, each with its reason above it.
+# ElevenLabs workspace-secret reference id, not the secret; operator approved 2026-10-27
+2d34a5e2d8f4490c0a0292463fd6c141a57a8deb:elevenlabs/tool_configs/get_play.json:generic-api-key:17
+# ElevenLabs workspace-secret reference id, not the secret; operator approved 2026-10-27
+2d34a5e2d8f4490c0a0292463fd6c141a57a8deb:elevenlabs/tool_configs/search_plays.json:generic-api-key:20
+# ElevenLabs workspace-secret reference id, not the secret; operator approved 2026-10-27
+2d34a5e2d8f4490c0a0292463fd6c141a57a8deb:elevenlabs/tool_configs/draw_play.json:generic-api-key:21
+# ElevenLabs workspace-secret reference id, not the secret; operator approved 2026-10-27
+2d34a5e2d8f4490c0a0292463fd6c141a57a8deb:elevenlabs/README.md:generic-api-key:45
+# test-fixture HMAC key; operator approved 2026-10-27
+2d34a5e2d8f4490c0a0292463fd6c141a57a8deb:tests/test_webhooks_elevenlabs.py:generic-api-key:26

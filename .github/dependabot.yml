@@ -1,0 +1,10 @@
+# security-kit managed copy — do not hand-edit; edits fail the drift gate. Core: templates/security · Front: docs/workflow/fronts/hlc-elevenagents/security.json
+# Ecosystems are derived from the front's modules, never listed by hand.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
