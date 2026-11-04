@@ -54,7 +54,7 @@ jobs:
 
   quality:
     runs-on: ubuntu-latest
-    # report-only: baseline 9 ruff findings (all I001 import order) on 2026-11-04
+    # report-only: baseline 9 ruff findings (all I001 import order) on 2026-11-04, hlc task #12072
     continue-on-error: true
     permissions:
       contents: read
