@@ -1,7 +1,7 @@
 {
   "type": "client",
   "name": "show_draw",
-  "description": "Show a freshly drawn play on the coach's screen. Pass the draw_id that draw_play returned with status 'drawn'. Returns 'shown' when the drawing is on screen, or 'not found' when the drawing has expired.",
+  "description": "Show a freshly drawn play on the coach's screen. Pass the draw_id that draw_play returned with status 'drawn'. Returns 'shown' when the drawing is on screen, 'not found' when the drawing has expired, 'not drawn: the call did not resolve to a play', 'superseded: a newer request is on screen' when a later show replaced this one (nothing went wrong), or a string starting 'error:' when the playbook could not be reached.",
   "expects_response": true,
   "response_timeout_secs": 10,
   "parameters": {

@@ -1,7 +1,7 @@
 {
   "type": "client",
   "name": "show_play",
-  "description": "Show one saved play on the coach's screen. Pass the id of a play returned by search_plays, and hash 'left' or 'right' when the coach named one. Returns 'shown' when the drawing is on screen, 'shown, but no <hash> hash version is saved' when that hash was never saved, or 'not found'.",
+  "description": "Show one saved play on the coach's screen. Pass the id of a play returned by search_plays, and hash 'left' or 'right' when the coach named one. Returns 'shown' when the drawing is on screen, 'shown, but no <hash> hash version is saved' when that hash was never saved, 'not found', 'superseded: a newer request is on screen' when a later show replaced this one (nothing went wrong), or a string starting 'error:' when the playbook could not be reached.",
   "expects_response": true,
   "response_timeout_secs": 10,
   "parameters": {

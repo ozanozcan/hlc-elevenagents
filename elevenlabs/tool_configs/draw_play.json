@@ -11,7 +11,7 @@
       "properties": {
         "call": {
           "type": "string",
-          "description": "The play call as the coach said it, e.g. 'spread right hash, field mills, boundary smash'. Keep the coach's words; do not add routes or players they did not say."
+          "description": "The play call as the coach said it, e.g. 'spread right hash, field mills, boundary smash'. Keep the coach's words; do not add routes or players they did not say. At most 500 characters."
         }
       },
       "required": ["call"]
